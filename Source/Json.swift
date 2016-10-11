@@ -71,27 +71,27 @@ extension Json {
         return try JsonDeserializer(source).deserialize()
     }
     
-    public static func deserialize<ByteSequence: Collection where ByteSequence.Iterator.Element == UInt8>(_ sequence: ByteSequence) throws -> Json {
+    public static func deserialize<ByteSequence: Collection>(_ sequence: ByteSequence) throws -> Json where ByteSequence.Iterator.Element == UInt8 {
         return try JsonDeserializer(sequence).deserialize()
     }
 }
 
 extension Json {
     public enum SerializationStyle {
-        case Default
-        case PrettyPrint
+        case `default`
+        case prettyPrint
         
-        private var serializer: JsonSerializer.Type {
+        fileprivate var serializer: JsonSerializer.Type {
             switch self {
-            case .Default:
+            case .default:
                 return DefaultJsonSerializer.self
-            case .PrettyPrint:
+            case .prettyPrint:
                 return PrettyJsonSerializer.self
             }
         }
     }
     
-    public func serialize(_ style: SerializationStyle = .Default) -> String {
+    public func serialize(_ style: SerializationStyle = .default) -> String {
         return style.serializer.init().serialize(self)
     }
 }
@@ -107,7 +107,7 @@ extension Json {
     public var bool: Bool? {
         if case let .bool(bool) = self {
             return bool
-        } else if let integer = int where integer == 1 || integer == 0 {
+        } else if let integer = int , integer == 1 || integer == 0 {
             // When converting from foundation type `[String : AnyObject]`, something that I see as important, 
             // it's not possible to distinguish between 'bool', 'double', and 'int'.
             // Because of this, if we have an integer that is 0 or 1, and a user is requesting a boolean val,
@@ -132,7 +132,7 @@ extension Json {
     }
 
     public var int: Int? {
-        guard case let .number(double) = self where double % 1 == 0 else {
+        guard case let .number(double) = self , double.truncatingRemainder(dividingBy: 1) == 0 else {
             return nil
         }
         
@@ -166,7 +166,7 @@ extension Json {
 extension Json {
     public subscript(index: Int) -> Json? {
         assert(index >= 0)
-        guard let array = self.array where index < array.count else { return nil }
+        guard let array = self.array , index < array.count else { return nil }
         return array[index]
     }
 
@@ -225,31 +225,31 @@ public func ==(lhs: Json, rhs: Json) -> Bool {
 
 // MARK: Literal Convertibles
 
-extension Json: NilLiteralConvertible {
+extension Json: ExpressibleByNilLiteral {
     public init(nilLiteral value: Void) {
         self = .null
     }
 }
 
-extension Json: BooleanLiteralConvertible {
+extension Json: ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: BooleanLiteralType) {
         self = .bool(value)
     }
 }
 
-extension Json: IntegerLiteralConvertible {
+extension Json: ExpressibleByIntegerLiteral {
     public init(integerLiteral value: IntegerLiteralType) {
         self = .number(Double(value))
     }
 }
 
-extension Json: FloatLiteralConvertible {
+extension Json: ExpressibleByFloatLiteral {
     public init(floatLiteral value: FloatLiteralType) {
         self = .number(Double(value))
     }
 }
 
-extension Json: StringLiteralConvertible {
+extension Json: ExpressibleByStringLiteral {
     public typealias UnicodeScalarLiteralType = String
     public typealias ExtendedGraphemeClusterLiteralType = String
 
@@ -266,13 +266,13 @@ extension Json: StringLiteralConvertible {
     }
 }
 
-extension Json: ArrayLiteralConvertible {
+extension Json: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: Json...) {
         self = .array(elements)
     }
 }
 
-extension Json: DictionaryLiteralConvertible {
+extension Json: ExpressibleByDictionaryLiteral {
     public init(dictionaryLiteral elements: (String, Json)...) {
         var object = [String : Json](minimumCapacity: elements.count)
         elements.forEach { key, value in

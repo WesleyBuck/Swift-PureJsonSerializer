@@ -63,7 +63,7 @@ internal class DefaultJsonSerializer: JsonSerializer {
 }
 
 internal class PrettyJsonSerializer: DefaultJsonSerializer {
-    private var indentLevel = 0
+    fileprivate var indentLevel = 0
 
     required init() {
         super.init()

@@ -16,15 +16,16 @@ public extension Json {
             ob.forEach { key, val in
                 mapped[key] = val.anyValue
             }
-            return mapped
+            return mapped as AnyObject
         case .array(let array):
-            return array.map { $0.anyValue }
+            let mapped = array.map { $0.anyValue }
+            return mapped as AnyObject
         case .bool(let bool):
-            return bool
+            return bool as AnyObject
         case .number(let number):
-            return number
+            return number as AnyObject
         case .string(let string):
-            return string
+            return string as AnyObject
         case .null:
             return NSNull()
         }
@@ -70,9 +71,9 @@ extension Json {
 }
 
 extension Json {
-    public static func deserialize(_ data: NSData) throws -> Json {
-        let startPointer = UnsafePointer<UInt8>(data.bytes)
-        let bufferPointer = UnsafeBufferPointer(start: startPointer, count: data.length)
+    public static func deserialize(_ data: Data) throws -> Json {
+        let startPointer = (data as NSData).bytes.bindMemory(to: UInt8.self, capacity: data.count)
+        let bufferPointer = UnsafeBufferPointer(start: startPointer, count: data.count)
         return try deserialize(bufferPointer)
     }
 }
